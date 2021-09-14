@@ -7,6 +7,10 @@ COPY package.json /app
 
 RUN npm install
 
+RUN npm rebuild node-sass --force
+
+RUN npm install node-sass
+
 COPY . /app
 
 RUN npm run build --prod
