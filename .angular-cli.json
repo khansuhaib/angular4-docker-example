@@ -51,7 +51,6 @@
     }
   },
   "defaults": {
-    "styleExt": "sass",
     "component": {}
   }
 }
