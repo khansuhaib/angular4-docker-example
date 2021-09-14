@@ -1,34 +1,28 @@
-### STAGE 1: Build ###
+# Stage 1: Compile and Build angular codebase
 
-# We label our stage as 'builder'
-FROM node:9-alpine as builder
+# Use official node image as the base image
+FROM node:latest as build
 
-COPY package.json package-lock.json ./
+# Set the working directory
+WORKDIR /usr/local/app
 
-RUN npm set progress=false && npm config set depth 0 && npm cache clean --force
+# Add the source code to app
+COPY ./ /usr/local/app/
 
-## Storing node modules on a separate layer will prevent unnecessary npm installs at each build
-RUN npm i && mkdir /ng-app && cp -R ./node_modules ./ng-app
+# Install all the dependencies
+RUN npm install
 
-WORKDIR /ng-app
-
-COPY . .
-
-## Build the angular app in production mode and store the artifacts in dist folder
-RUN $(npm bin)/ng build --prod
+# Generate the build of the application
+RUN npm run build
 
 
-### STAGE 2: Setup ###
+# Stage 2: Serve app with nginx server
 
-FROM nginx:1.13.3-alpine
+# Use official nginx image as the base image
+FROM nginx:latest
 
-## Copy our default nginx config
-COPY nginx/default.conf /etc/nginx/conf.d/
+# Copy the build output to replace the default nginx contents.
+COPY --from=build /usr/local/app/dist/sample-angular-app /usr/share/nginx/html
 
-## Remove default nginx website
-RUN rm -rf /usr/share/nginx/html/*
-
-## From 'builder' stage copy over the artifacts in dist folder to default nginx public folder
-COPY --from=builder /ng-app/dist /usr/share/nginx/html
-
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port 80
+EXPOSE 80
