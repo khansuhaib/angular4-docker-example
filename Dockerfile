@@ -5,7 +5,7 @@ RUN mkdir -p /app
 WORKDIR /app
 COPY package.json /app
 
-RUN npm install
+#RUN npm install
 RUN npm npm install -g npm@7.23.0
 
 RUN npm rebuild node-sass --force
