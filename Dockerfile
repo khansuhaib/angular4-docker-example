@@ -1,22 +1,32 @@
-# Stage 1
-FROM node:16-alpine as build-step
-RUN mkdir -p /app
+### STAGE 1: Build ###
+FROM node:lts-alpine AS build
 
-WORKDIR /app
-COPY package.json /app
+#### make the 'app' folder the current working directory
+WORKDIR /usr/src/app
 
-#RUN npm install
-RUN npm npm install -g npm@7.23.0
+#### copy both 'package.json' and 'package-lock.json' (if available)
+COPY package*.json ./
 
-RUN npm rebuild node-sass --force
+#### install angular cli
+RUN npm install -g @angular/cli
 
-RUN npm install node-sass
+#### install project dependencies
+RUN npm install
 
-COPY . /app
+#### copy things
+COPY . .
 
-RUN npm run build --prod
+#### generate build --prod
+RUN npm run build:ssr
 
-# Stage 2
+### STAGE 2: Run ###
+FROM nginxinc/nginx-unprivileged
 
-FROM nginx:1.17.1-alpine
-COPY --from=build-step /app/docs /usr/share/nginx/html
+#### copy nginx conf
+COPY ./config/nginx.conf /etc/nginx/conf.d/default.conf
+
+#### copy artifact build from the 'build environment'
+COPY --from=build /usr/src/app/dist/vitorspace/browser /usr/share/nginx/html
+
+#### don't know what this is, but seems cool and techy
+CMD ["nginx", "-g", "daemon off;"]
